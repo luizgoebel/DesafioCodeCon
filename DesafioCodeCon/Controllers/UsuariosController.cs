@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DesafioCodeCon.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DesafioCodeCon.Controllers;
 
@@ -8,19 +9,19 @@ public class UsuariosController : ControllerBase
 {
 
     [HttpPost("users")]
-    public IActionResult Users()
+    public IActionResult Users(List<Usuario> usuarios)
     {
         return Ok();
     }
 
     [HttpGet("superusers")]
-    public IActionResult Superusers(int score = 900, bool active = true)
+    public IActionResult SuperUsers(int score = 900, bool active = true)
     {
         return Ok();
     }
 
     [HttpGet("top-countries")]
-    public IActionResult TopCcountries()
+    public IActionResult TopCountries()
     {
         return Ok();
     }
@@ -32,13 +33,13 @@ public class UsuariosController : ControllerBase
     }
 
     [HttpGet("active-users-per-day")]
-    public IActionResult ActiveUsersPerDay(int? min = 3000)
+    public IActionResult ActiveUsersPerDay()
     {
         return Ok();
     }
 
     [HttpGet("evaluation")]
-    public IActionResult evaluation()
+    public IActionResult Evaluation()
     {
         return Ok();
     }

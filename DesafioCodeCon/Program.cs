@@ -1,5 +1,7 @@
 using DesafioCodeCon.Context;
 using Microsoft.EntityFrameworkCore;
+using DesafioCodeCon.Services;
+using DesafioCodeCon.Services.Iservices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +16,9 @@ var connectionString = builder.Configuration.GetConnectionString("MySqlConnectio
 
 builder.Services.AddDbContext<UsuarioDbContext>(options =>
     options.UseInMemoryDatabase("UsuarioDb"));
+
+// Register application services
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 
 var app = builder.Build();
 
