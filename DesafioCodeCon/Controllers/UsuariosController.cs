@@ -1,46 +1,97 @@
 ﻿using DesafioCodeCon.Models;
+using DesafioCodeCon.Services.Iservices;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DesafioCodeCon.Controllers;
 
 [ApiController]
-//[Route("api/usuario")]
 public class UsuariosController : ControllerBase
 {
+    private readonly IUsuarioService _usuarioService;
+
+    public UsuariosController(IUsuarioService usuarioService)
+    {
+        _usuarioService = usuarioService;
+    }
 
     [HttpPost("users")]
-    public IActionResult Users(List<Usuario> usuarios)
+    public IActionResult PostUsers([FromBody] List<Usuario> usuarios)
     {
-        return Ok();
+        bool saved = _usuarioService.PostUsers(usuarios);
+        if (saved)
+            return Ok();
+        return BadRequest();
     }
 
     [HttpGet("superusers")]
     public IActionResult SuperUsers(int score = 900, bool active = true)
     {
-        return Ok();
+        try
+        {
+            var response = _usuarioService.GetSuperUsers(score, active);
+            if (response == null)
+                return BadRequest();
+            return Ok(response);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
 
     [HttpGet("top-countries")]
     public IActionResult TopCountries()
     {
-        return Ok();
+        try
+        {
+            var response = _usuarioService.GetTopCountries();
+            if (response == null)
+                return BadRequest();
+            return Ok(response);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
 
     [HttpGet("team-insights")]
     public IActionResult TeamInsights()
     {
-        return Ok();
+        try
+        {
+            var response = _usuarioService.GetTeamInsights();
+            if (response == null)
+                return BadRequest();
+            return Ok(response);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
 
     [HttpGet("active-users-per-day")]
-    public IActionResult ActiveUsersPerDay()
+    public IActionResult ActiveUsersPerDay([FromQuery] int? min)
     {
-        return Ok();
+        try
+        {
+            var response = _usuarioService.GetActiveUsersPerDay(min);
+            if (response == null)
+                return BadRequest();
+            return Ok(response);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
 
     [HttpGet("evaluation")]
     public IActionResult Evaluation()
     {
-        return Ok();
+        var result = _usuarioService.GetEvaluation();
+
+        return Ok(result);
     }
 }
