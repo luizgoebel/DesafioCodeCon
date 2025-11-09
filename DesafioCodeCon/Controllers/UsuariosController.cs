@@ -56,11 +56,11 @@ public class UsuariosController : ControllerBase
     }
 
     [HttpGet("team-insights")]
-    public IActionResult TeamInsights()
+    public async Task<IActionResult> TeamInsights(CancellationToken cancellationToken)
     {
         try
         {
-            var response = _usuarioService.GetTeamInsights();
+            var response = await _usuarioService.GetTeamInsights(cancellationToken);
             if (response == null)
                 return BadRequest();
             return Ok(response);

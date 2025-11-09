@@ -1,7 +1,8 @@
 using DesafioCodeCon.Context;
-using Microsoft.EntityFrameworkCore;
+using DesafioCodeCon.Seed; // adicionado para usar UsuariosSeed
 using DesafioCodeCon.Services;
 using DesafioCodeCon.Services.Iservices;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,11 @@ using (var scope = app.Services.CreateScope())
 {
     var ctx = scope.ServiceProvider.GetRequiredService<UsuarioDbContext>();
     ctx.Database.EnsureCreated();
+
+    var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+    var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+    var logger = loggerFactory.CreateLogger("Seed");
+    UsuariosSeed.SeedFromJson(ctx, app.Configuration, env, logger);
 }
 
 app.UseHttpsRedirection();

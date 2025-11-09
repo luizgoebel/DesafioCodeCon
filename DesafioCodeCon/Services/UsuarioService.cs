@@ -1,4 +1,5 @@
-﻿using DesafioCodeCon.Context;
+﻿using System.Collections.Concurrent;
+using DesafioCodeCon.Context;
 using DesafioCodeCon.Models;
 using DesafioCodeCon.Services.Iservices;
 using Microsoft.EntityFrameworkCore;
@@ -8,10 +9,12 @@ namespace DesafioCodeCon.Services;
 public class UsuarioService : IUsuarioService
 {
     private readonly UsuarioDbContext _context;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public UsuarioService(UsuarioDbContext context)
+    public UsuarioService(UsuarioDbContext context, IServiceScopeFactory scopeFactory)
     {
         _context = context;
+        _scopeFactory = scopeFactory;
     }
 
     public bool PostUsers(List<Usuario> usuarios)
@@ -54,20 +57,43 @@ public class UsuarioService : IUsuarioService
         return superUsers;
     }
 
-    public object GetTeamInsights()
+    public async Task<object> GetTeamInsights(CancellationToken cancellationToken = default)
     {
-        var data = _context.Usuarios
+        // Processamento streaming (sem paralelismo) para estabilidade e velocidade com 1000 registros
+        var agg = new Dictionary<string, (int members, int leaders, int projectsCompleted, int active)>();
+
+        await foreach (var u in _context.Usuarios
             .AsNoTracking()
-            .GroupBy(u => u.Team.Name)
-            .Select(g => new
-            {
-                team = g.Key,
-                totalMembers = g.Count(),
-                leaders = g.Count(x => x.Team.Leader),
-                projectsCompleted = g.SelectMany(x => x.Team.Projects).Count(p => p.Completed),
-                activePercentage = g.Count(x => x.Active) == 0 ? 0 : (double)g.Count(x => x.Active) / g.Count() * 100.0
-            })
-            .ToList();
+            .AsAsyncEnumerable()
+            .WithCancellation(cancellationToken))
+        {
+            var teamName = u.Team?.Name ?? string.Empty;
+            var isLeader = u.Team?.Leader ?? false;
+            var projectsCompleted = u.Team?.Projects?.Count(p => p.Completed) ?? 0;
+            var isActive = u.Active ? 1 : 0;
+
+            if (!agg.TryGetValue(teamName, out var curr))
+                curr = (0, 0, 0, 0);
+
+            curr.members++;
+            if (isLeader) curr.leaders++;
+            curr.projectsCompleted += projectsCompleted;
+            curr.active += isActive;
+
+            agg[teamName] = curr;
+        }
+
+        var data = agg.Select(kv => new
+        {
+            team = kv.Key,
+            totalMembers = kv.Value.members,
+            leaders = kv.Value.leaders,
+            projectsCompleted = kv.Value.projectsCompleted,
+            activePercentage = kv.Value.members == 0 ? 0 : (double)kv.Value.active / kv.Value.members * 100.0
+        })
+        .OrderByDescending(x => x.totalMembers)
+        .ToList();
+
         return data;
     }
 
@@ -86,7 +112,6 @@ public class UsuarioService : IUsuarioService
 
     public object GetEvaluation()
     {
-        // Placeholder: Could implement additional evaluation metrics if specified later.
         return new { totalUsers = _context.Usuarios.Count() };
     }
 }
